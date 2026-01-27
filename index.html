@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Legacy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=4.9.13">
+</head>
+
+<body class="view-only">
+    <div id="app">
+        <header class="main-header">
+            <div class="header-content">
+                <h1 id="headerTitle">Family Legacy</h1>
+                <span class="version-badge">v4.9.13</span>
+            </div>
+            <div class="header-actions" style="display: flex; gap: 1rem; align-items: center;">
+                <button id="viewToggleBtn" class="btn-primary"
+                    style="font-size: 0.9rem; padding: 0.5rem 1rem;">Edit</button>
+                <p>Connecting Generations</p>
+            </div>
+            <button id="backButton" class="back-button hidden">← Back</button>
+        </header>
+
+        <main id="treeContainer" class="tree-container">
+            <!-- Family Tree will be rendered here -->
+        </main>
+    </div>
+
+    <!-- SVG Container for connecting lines -->
+    <svg id="connectionsSvg" class="connections-svg"></svg>
+
+    <script type="module" src="js/app.js?v=3.8"></script>
+</body>
+
+</html>
