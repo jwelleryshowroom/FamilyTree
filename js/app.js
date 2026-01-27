@@ -4,6 +4,7 @@ import { AddMemberForm } from './components/AddMemberForm.js';
 import { ConfirmModal } from './components/ConfirmModal.js';
 import { dbService } from './firebase/db.js';
 import { storageService } from './firebase/storage.js';
+import { initTilt } from './tilt.js';
 
 // State
 const state = {
@@ -97,7 +98,10 @@ async function initApp() {
 
         // Scroll Handler for Connection Lines (Rubber-band effect)
         window.addEventListener('scroll', () => {
-            requestAnimationFrame(() => updateConnections());
+            requestAnimationFrame(() => {
+                updateConnections();
+                initTilt(); // Initial init
+            });
         });
 
     } catch (error) {
@@ -184,6 +188,7 @@ async function handleAddMember(data) {
 
             // 3. Render (Optimistic)
             updateView(state.currentFocalId);
+            setTimeout(initTilt, 100); // Re-init tilt on new elements
 
             // 4. Persist (Background)
             await Promise.all(affectedMembers.map(m => dbService.saveMember(m)));
@@ -223,6 +228,7 @@ async function onFormSubmit(data) {
 
             // 2. Render IMMEDIATELY
             updateView(state.currentFocalId);
+            setTimeout(initTilt, 100);
 
             // 3. Persist (Background)
             await dbService.updateMember(id, updates);

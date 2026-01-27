@@ -1,13 +1,15 @@
 :root {
-    --bg-color: #0f172a;
-    --card-bg: rgba(255, 255, 255, 0.05);
-    --card-border: rgba(255, 255, 255, 0.1);
-    --text-primary: #f8fafc;
+    --bg-gradient: radial-gradient(circle at 50% 0%, #1e293b, #0f172a 80%);
+    --card-bg: rgba(255, 255, 255, 0.03);
+    --card-border: rgba(255, 255, 255, 0.08);
+    /* Faint shiny border */
+    --card-highlight: rgba(255, 255, 255, 0.15);
+    --text-primary: #f1f5f9;
     --text-secondary: #94a3b8;
     --accent-color: #38bdf8;
-    --heart-color: #ef4444;
-    --line-color: rgba(56, 189, 248, 0.4);
-    --hover-glow: 0 0 20px rgba(56, 189, 248, 0.2);
+    --accent-glow: 0 0 25px rgba(56, 189, 248, 0.3);
+    --heart-color: #f43f5e;
+    --line-color: rgba(56, 189, 248, 0.3);
 }
 
 * {
@@ -18,18 +20,24 @@
 
 body {
     font-family: 'Outfit', sans-serif;
-    background-color: var(--bg-color);
+    background: #0f172a;
+    /* Fallback */
+    background-image:
+        radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.08), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.08), transparent 25%);
     color: var(--text-primary);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
+    /* For tilt effect safety */
 }
 
+/* Glass Header */
 .main-header {
     padding: 1rem 2rem;
-    background: rgba(15, 23, 42, 0.95);
-    /* More opacity for content behind */
-    backdrop-filter: blur(10px);
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--card-border);
     z-index: 100;
     display: flex;
@@ -47,45 +55,54 @@ body {
 
 .version-badge {
     font-size: 0.75rem;
-    background: rgba(56, 189, 248, 0.2);
+    background: rgba(56, 189, 248, 0.1);
     color: var(--accent-color);
     padding: 0.2rem 0.6rem;
     border-radius: 9999px;
-    border: 1px solid rgba(56, 189, 248, 0.4);
+    border: 1px solid rgba(56, 189, 248, 0.2);
     font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 .main-header h1 {
     font-size: 1.5rem;
-    font-weight: 700;
-    background: linear-gradient(to right, var(--text-primary), var(--accent-color));
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 30%, var(--accent-color));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
 }
 
 .main-header p {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--text-secondary);
+    font-weight: 300;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .back-button {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--card-border);
     color: var(--text-primary);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
+    padding: 0.5rem 1.2rem;
+    border-radius: 99px;
     cursor: pointer;
     transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
 }
 
 .back-button:hover {
     background: var(--accent-color);
-    color: #000;
+    color: #0f172a;
+    box-shadow: var(--accent-glow);
+    border-color: var(--accent-color);
 }
 
 .back-button.hidden {
     opacity: 0;
     pointer-events: none;
+    transform: translateX(-10px);
 }
 
 /* Tree Container Layout */
@@ -96,9 +113,10 @@ body {
     padding: 4rem 2rem;
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-    gap: 3rem;
+    gap: 4rem;
+    /* More breathing room */
     align-items: start;
-    padding-bottom: 2rem;
+    padding-bottom: 4rem;
 }
 
 /* Columns */
@@ -106,11 +124,11 @@ body {
 .daughters-column {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 2.5rem;
+    /* More spacing */
     width: 100%;
-    max-width: 320px;
-    margin-top: 15rem;
-    /* V-Shape Push */
+    max-width: 340px;
+    margin-top: 16rem;
     position: relative;
     z-index: 10;
 }
@@ -131,26 +149,43 @@ body {
     justify-content: center;
     z-index: 10;
     position: sticky;
-    top: 90px;
-    /* Offset for sticky header */
+    top: 100px;
 }
 
 .couple-wrapper {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 2rem;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 24px;
-    border: 1px solid var(--card-border);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
+    gap: 1.5rem;
+    padding: 2.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    /* Deep shadow */
+    backdrop-filter: blur(20px);
+    /* Heavy frost */
+    position: relative;
+}
+
+/* Premium Glow behind Couple */
+.couple-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60%;
+    height: 60%;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.15), transparent 70%);
+    z-index: -1;
+    pointer-events: none;
 }
 
 .heart-icon {
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: var(--heart-color);
-    animation: heartbeat 2s infinite;
+    animation: heartbeat 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(244, 63, 94, 0.5));
 }
 
 @keyframes heartbeat {
@@ -158,77 +193,107 @@ body {
     0%,
     100% {
         transform: scale(1);
+        opacity: 0.9;
     }
 
     50% {
-        transform: scale(1.1);
+        transform: scale(1.15);
+        opacity: 1;
     }
 }
 
-/* Unit Cards */
+/* Glass Cards */
 .person-card {
     position: relative;
-    width: 260px;
-    padding: 1rem;
-    background: #1B2335;
+    width: 280px;
+    padding: 1.2rem;
+
+    /* Glass Effect */
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--card-border);
-    border-radius: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    /* Top highlight */
+    border-radius: 20px;
+
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.2rem;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* 3D Prep */
+    transform-style: preserve-3d;
+    will-change: transform;
+    transition: transform 0.1s ease-out;
+    /* Controlled by JS mostly */
+
     z-index: 5;
-    /* For ribbon/effects */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover State (Handled by Tilt JS mostly, but adding light) */
+.person-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 20px;
+    background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.person-card:hover::after {
+    opacity: 1;
+}
+
+.person-card:hover {
+    border-color: var(--accent-color);
+    box-shadow: var(--accent-glow);
 }
 
 /* Deceased Visuals */
 .person-card.deceased {
-    background: rgba(15, 23, 42, 0.6);
-    /* Darker */
-    border-color: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.02);
 }
 
 .person-card.deceased .person-avatar {
     filter: grayscale(100%);
-    opacity: 0.8;
+    opacity: 0.7;
     border-color: var(--text-secondary);
 }
 
 .person-card.deceased .person-info h3 {
     color: var(--text-secondary);
-    /* Muted name */
 }
 
 .deceased-icon {
     display: inline-block;
     vertical-align: middle;
-    margin-left: 4px;
+    margin-left: 6px;
     font-size: 1rem;
-    position: relative;
-    top: -1px;
-    /* Optical adjustment */
-    opacity: 0.9;
-}
-
-.person-card:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: var(--hover-glow);
-    border-color: var(--accent-color);
+    opacity: 0.8;
 }
 
 .person-avatar {
-    width: 50px;
-    height: 50px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #a855f7);
+    /* Gradient Avatar */
+    background: linear-gradient(135deg, #6366f1, #ec4899);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
     font-size: 1.2rem;
-    border: 2px solid var(--text-primary);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .person-avatar img {
@@ -239,38 +304,41 @@ body {
 }
 
 .person-info h3 {
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: 1.05rem;
+    font-weight: 600;
     margin-bottom: 0.2rem;
+    letter-spacing: 0.2px;
 }
 
 .person-info span {
     font-size: 0.8rem;
     color: var(--text-secondary);
     display: block;
+    font-weight: 300;
 }
 
 /* Root Couple Styles Override */
 .focal-couple .person-card {
-    width: 280px;
-    padding: 1.5rem;
-    background: rgba(255, 255, 255, 0.08);
+    width: 300px;
+    padding: 1.8rem;
+    background: rgba(255, 255, 255, 0.06);
+    /* Slightly lighter */
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .focal-couple .person-avatar {
-    width: 70px;
-    height: 70px;
-    font-size: 1.5rem;
+    width: 72px;
+    height: 72px;
+    font-size: 1.6rem;
 }
 
-/* SVG Connections */
+/* SVG Connections - PULSE */
 .connections-svg {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    /* JS sets min-height */
     pointer-events: none;
     z-index: 1;
 }
@@ -278,8 +346,12 @@ body {
 path {
     fill: none;
     stroke: var(--line-color);
-    stroke-width: 2;
+    stroke-width: 2px;
+    stroke-linecap: round;
     transition: d 0.5s ease;
+    /* Optional: To make it look like fluid, we can use a stroke-dasharray animation if needed, 
+       but for now a solid glow is cleaner */
+    filter: drop-shadow(0 0 2px rgba(56, 189, 248, 0.5));
 }
 
 /* Add Button */
