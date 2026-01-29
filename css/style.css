@@ -452,6 +452,111 @@ html {
 
 /* Edit Mode Elements */
 .edit-mode-active .nodes-container {
+    border: 1px dashed rgba(246, 211, 101, 0.2);
+    background: rgba(255, 255, 255, 0.01);
+    padding: var(--spacing-sm);
+}
+
+.add-member-capsule {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.6rem 1.2rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--gold-primary);
+    border-radius: var(--radius-full);
+    color: var(--gold-primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    backdrop-filter: blur(10px);
+}
+
+.add-member-capsule:hover {
+    background: var(--gradient-gold);
+    color: var(--bg-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px var(--gold-glow);
+}
+
+.card-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: none;
+    /* Hidden by default */
+    gap: 8px;
+    z-index: 100;
+}
+
+.edit-mode-active .couple-card:hover .card-actions,
+.edit-mode-active .single-card:hover .card-actions {
+    display: flex;
+}
+
+.action-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: rgba(10, 14, 26, 0.8);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(5px);
+    font-size: 0.8rem;
+}
+
+.action-btn.edit:hover {
+    color: var(--gold-primary);
+    border-color: var(--gold-primary);
+    transform: scale(1.1);
+}
+
+.action-btn.delete:hover {
+    color: #ff4d4d;
+    border-color: #ff4d4d;
+    transform: scale(1.1);
+}
+
+/* Deceased Look - "Ancestral Light" */
+.is-deceased .member-photo {
+    filter: grayscale(1) brightness(0.8) contrast(1.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+.is-deceased .member-name {
+    color: var(--text-secondary);
+    font-weight: 500;
+    position: relative;
+}
+
+.is-deceased::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.2) 100%);
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+
+.center-line {
+    display: none;
+}
+
+/* Edit Mode Elements */
+.edit-mode-active .nodes-container {
     border: 1px dashed rgba(246, 211, 101, 0.3);
     background: rgba(255, 255, 255, 0.02);
 }
@@ -827,24 +932,139 @@ html {
     display: none;
 }
 
+/* Modern Modal Styles Overhaul */
 .modal-overlay {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
 }
 
 .modal-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--glass-border);
+    max-width: 500px;
+    padding: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: inherit;
+    transition: all var(--transition-fast);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--gold-primary);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.modern-switch {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+}
+
+.switch-track {
+    width: 44px;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 11px;
     position: relative;
-    background: var(--glass-bg);
-    backdrop-filter: blur(30px);
+    transition: all var(--transition-fast);
+}
+
+.switch-thumb {
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: all var(--transition-fast);
+}
+
+.switch-active .switch-track {
+    background: var(--gradient-gold);
+}
+
+.switch-active .switch-thumb {
+    left: 25px;
+    background: var(--bg-primary);
+}
+
+.modal-footer {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--glass-border);
+}
+
+.btn-primary {
+    flex: 1;
+    background: var(--gradient-gold);
+    color: var(--bg-primary);
+    border: none;
+    padding: 0.8rem;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 0 20px var(--gold-glow);
+    transform: translateY(-2px);
+}
+
+.btn-danger-outline {
+    padding: 0.8rem 1.2rem;
+    background: transparent;
+    border: 1px solid #ff4d4d;
+    color: #ff4d4d;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.btn-danger-outline:hover {
+    background: #ff4d4d;
+    color: white;
+}
+
+
+
+.modal-content {
+    position: relative;
+    background: var(--bg-secondary);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-xl);
+    padding: 2.5rem;
     width: 90%;
     max-width: 500px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
     animation: modalSlideUp 0.4s var(--transition-base);
     z-index: 101;
 }

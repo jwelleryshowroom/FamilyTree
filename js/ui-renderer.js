@@ -175,24 +175,17 @@ export const uiRenderer = {
                 header.appendChild(h2);
             }
 
-            // Remove existing add button if any
-            const oldAdd = header.querySelector('.btn-add-inline');
-            if (oldAdd) oldAdd.remove();
+            // v2.9.0 - Clean up all previous add controls
+            const oldAddInline = header.querySelector('.btn-add-inline');
+            const oldAddCapsule = header.querySelector('.add-member-capsule');
+            if (oldAddInline) oldAddInline.remove();
+            if (oldAddCapsule) oldAddCapsule.remove();
 
             if (this._isEditMode) {
                 const addBtn = document.createElement('button');
-                addBtn.className = 'btn-add-inline';
-                addBtn.innerHTML = '+';
-                addBtn.title = `Add ${title.slice(0, -1)}`;
-                addBtn.onclick = () => {
-                    const name = prompt(`Enter ${title.slice(0, -1).toLowerCase()} name:`);
-                    if (name) {
-                        const event = new CustomEvent('add-child', {
-                            detail: { parentId: rootId, childName: name, gender: gender }
-                        });
-                        document.dispatchEvent(event);
-                    }
-                };
+                addBtn.className = 'add-member-capsule';
+                addBtn.innerHTML = `<span>+</span> Add ${title.slice(0, -1)}`;
+                addBtn.onclick = () => this.openCreateModal(rootId, gender);
                 header.appendChild(addBtn);
             }
         };
@@ -284,6 +277,7 @@ export const uiRenderer = {
     createSingleCard(member, isRootPosition) {
         const div = document.createElement('div');
         div.className = isRootPosition ? 'single-card active-root' : 'single-card child-node';
+        if (member.status === 'deceased') div.classList.add('is-deceased');
 
         if (isRootPosition) {
             div.onclick = () => this.openModal(member.id);
@@ -303,6 +297,16 @@ export const uiRenderer = {
             </div>
         `;
 
+        // v2.9.0 - Edit Overlays
+        if (this._isEditMode) {
+            html += `
+                <div class="card-actions">
+                    <button class="action-btn edit" title="Edit Member" onclick="event.stopPropagation(); uiRenderer.openEditModal('${member.id}')">✎</button>
+                    <button class="action-btn delete" title="Delete Member" onclick="event.stopPropagation(); uiRenderer.handleDeleteMember('${member.id}')">✕</button>
+                </div>
+            `;
+        }
+
         div.innerHTML = html;
         return div;
     },
@@ -310,6 +314,7 @@ export const uiRenderer = {
     createCoupleCard(member, spouse, isRootPosition) {
         const div = document.createElement('div');
         div.className = isRootPosition ? 'couple-card active-root' : 'couple-card child-node';
+        if (member.status === 'deceased') div.classList.add('is-deceased');
 
         // v2.6.0 - Drag & Drop Support
         if (!isRootPosition) {
@@ -321,7 +326,6 @@ export const uiRenderer = {
             div.onclick = () => this.openModal(member.id);
         } else {
             div.onclick = (e) => {
-                // Prevent navigation if we just finished a drag
                 if (div.classList.contains('just-dragged')) {
                     div.classList.remove('just-dragged');
                     return;
@@ -331,8 +335,6 @@ export const uiRenderer = {
         }
 
         const getInit = (m) => m ? m.name.charAt(0).toUpperCase() : '?';
-
-        // Build card content
         let html = '';
 
         // Primary member photo
@@ -342,7 +344,7 @@ export const uiRenderer = {
             </div>
         `;
 
-        // Names section - show names vertically
+        // Names section
         html += `<div class="couple-info">`;
         html += `<div class="couple-names">`;
         html += `<div class="name-row">${member.name}</div>`;
@@ -353,11 +355,21 @@ export const uiRenderer = {
         html += `</div>`;
         html += `</div>`;
 
-        // Spouse photo (if exists)
+        // Spouse photo
         if (spouse) {
             html += `
-                <div class="member-photo ${!spouse.photoUrl ? 'placeholder' : ''}">
+                <div class="member-photo ${!spouse.photoUrl ? 'placeholder' : ''} ${spouse.status === 'deceased' ? 'is-deceased' : ''}">
                     ${spouse.photoUrl ? `<img src="${spouse.photoUrl}" alt="${spouse.name}">` : getInit(spouse)}
+                </div>
+            `;
+        }
+
+        // v2.9.0 - Edit Overlays
+        if (this._isEditMode) {
+            html += `
+                <div class="card-actions">
+                    <button class="action-btn edit" title="Edit Member" onclick="event.stopPropagation(); uiRenderer.openEditModal('${member.id}')">✎</button>
+                    <button class="action-btn delete" title="Delete Member" onclick="event.stopPropagation(); uiRenderer.handleDeleteMember('${member.id}')">✕</button>
                 </div>
             `;
         }
@@ -507,45 +519,60 @@ export const uiRenderer = {
         const member = this._memberMap.get(id);
         if (!member) return;
 
-        console.log("Opening modal for:", member);
-
         const modal = document.getElementById('profile-modal');
+        const modalPhoto = document.getElementById('modal-photo');
+        const modalInitials = document.getElementById('modal-initials');
         const modalName = document.getElementById('modal-name');
         const modalRole = document.getElementById('modal-role');
-        const modalInitial = document.getElementById('modal-initials');
         const modalSpouse = document.getElementById('modal-spouse');
         const modalChildren = document.getElementById('modal-children');
 
+        const viewContent = document.getElementById('modal-view-content');
+        const editForm = document.getElementById('modal-edit-form');
+        const createForm = document.getElementById('modal-create-form');
+
+        // Reset display states
+        viewContent.style.display = 'block';
+        editForm.style.display = 'none';
+        createForm.style.display = 'none';
+
+        // Set Basic Info
         modalName.textContent = member.name;
-        modalRole.textContent = `Generation ${member.generation}`;
+        modalRole.textContent = member.gender === 'male' ? 'Father' : 'Mother';
 
         if (member.photoUrl) {
-            modalInitial.innerHTML = `<img src="${member.photoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+            modalPhoto.innerHTML = `<img src="${member.photoUrl}" alt="${member.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
         } else {
-            modalInitial.textContent = member.name.charAt(0);
+            modalPhoto.innerHTML = `<span id="modal-initials">${member.name.charAt(0).toUpperCase()}</span>`;
         }
 
-        // Spouse
+        // Render Spouses
         modalSpouse.innerHTML = '';
-        if (member.spouseId) {
-            const spouse = this._memberMap.get(member.spouseId);
-            modalSpouse.innerHTML = spouse ? `<span class="tag">${spouse.name}</span>` : `<span class="tag">Unknown</span>`;
-        } else {
-            modalSpouse.innerHTML = `<em style="color:var(--text-muted)">No spouse registered</em>`;
-        }
+        const spouseIds = member.spouses || (member.spouseId ? [member.spouseId] : []);
+        spouseIds.forEach(sid => {
+            const s = this._memberMap.get(sid);
+            if (s) {
+                const tag = document.createElement('div');
+                tag.className = 'tag';
+                tag.textContent = s.name;
+                tag.onclick = () => {
+                    modal.classList.add('hidden');
+                    this.navigateTo(sid);
+                };
+                modalSpouse.appendChild(tag);
+            }
+        });
 
-        // Children
+        // Render Children
         modalChildren.innerHTML = '';
-        const children = member.children || [];
-        if (children.length > 0) {
-            children.forEach(cid => {
-                const child = this._memberMap.get(cid);
-                if (child) {
-                    const tag = document.createElement('span');
+        if (member.children && member.children.length > 0) {
+            member.children.forEach(cid => {
+                const c = this._memberMap.get(cid);
+                if (c) {
+                    const tag = document.createElement('div');
                     tag.className = 'tag';
-                    tag.textContent = child.name;
-                    tag.onclick = (e) => {
-                        e.stopPropagation();
+                    tag.textContent = c.name;
+                    tag.onclick = () => {
                         modal.classList.add('hidden');
                         this.navigateTo(cid);
                     };
@@ -556,12 +583,100 @@ export const uiRenderer = {
             modalChildren.innerHTML = `<em style="color:var(--text-muted)">No children</em>`;
         }
 
-        const btnSpouse = document.getElementById('btn-add-spouse');
-        const btnChild = document.getElementById('btn-add-child');
-        if (btnSpouse) btnSpouse.onclick = () => this.handleAddSpouse(member);
-        if (btnChild) btnChild.onclick = () => this.handleAddChild(member);
+        modal.classList.remove('hidden');
+    },
+
+    openEditModal(id) {
+        const member = this._memberMap.get(id);
+        if (!member) return;
+
+        const modal = document.getElementById('profile-modal');
+        const viewContent = document.getElementById('modal-view-content');
+        const editForm = document.getElementById('modal-edit-form');
+        const createForm = document.getElementById('modal-create-form');
+
+        viewContent.style.display = 'none';
+        editForm.style.display = 'block';
+        createForm.style.display = 'none';
+
+        // Populate Form
+        document.getElementById('edit-name').value = member.name;
+        const toggle = document.getElementById('status-toggle');
+        if (member.status === 'deceased') {
+            toggle.classList.add('switch-active');
+        } else {
+            toggle.classList.remove('switch-active');
+        }
+
+        toggle.onclick = () => toggle.classList.toggle('switch-active');
+
+        editForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const newName = document.getElementById('edit-name').value;
+            const isDeceased = toggle.classList.contains('switch-active');
+
+            try {
+                const { dbService } = await import('./firebase/db.js');
+                await dbService.updateMember(id, {
+                    name: newName,
+                    status: isDeceased ? 'deceased' : 'alive'
+                });
+                modal.classList.add('hidden');
+                // Refresh App
+                location.reload();
+            } catch (err) {
+                console.error(err);
+                alert("Failed to save changes.");
+            }
+        };
+
+        const btnDelete = document.getElementById('btn-delete-member');
+        btnDelete.onclick = () => this.handleDeleteMember(id);
 
         modal.classList.remove('hidden');
+    },
+
+    openCreateModal(parentId, gender) {
+        const modal = document.getElementById('profile-modal');
+        const viewContent = document.getElementById('modal-view-content');
+        const editForm = document.getElementById('modal-edit-form');
+        const createForm = document.getElementById('modal-create-form');
+
+        viewContent.style.display = 'none';
+        editForm.style.display = 'none';
+        createForm.style.display = 'block';
+
+        const title = gender === 'male' ? 'Add Son' : 'Add Daughter';
+        document.getElementById('create-title').textContent = title;
+        document.getElementById('create-name').value = '';
+
+        createForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('create-name').value;
+            if (!name) return;
+
+            const event = new CustomEvent('add-child', {
+                detail: { parentId, childName: name, gender }
+            });
+            document.dispatchEvent(event);
+            modal.classList.add('hidden');
+        };
+
+        modal.classList.remove('hidden');
+    },
+
+    async handleDeleteMember(id) {
+        if (!confirm("Are you sure you want to remove this member? This action cannot be undone.")) return;
+
+        try {
+            const { dbService } = await import('./firebase/db.js');
+            await dbService.deleteMember(id);
+            alert("Member removed.");
+            location.reload();
+        } catch (err) {
+            console.error(err);
+            alert("Failed to delete member.");
+        }
     },
 
     drawConnectors() {

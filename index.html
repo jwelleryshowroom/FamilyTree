@@ -34,7 +34,7 @@
             <div class="logo-container">
                 <h1>The Heritage</h1>
                 <p>Family Lineage of Nagendra & Basanti</p>
-                <span class="version-badge">v2.8.0</span>
+                <span class="version-badge">v2.9.0</span>
             </div>
 
             <!-- Navigation & Mode Controls Integrated in Header -->
@@ -96,29 +96,60 @@
             <button class="close-btn">&times;</button>
 
             <div class="modal-header">
-                <div class="profile-photo-large placeholder">
-                    <span id="modal-initials">N</span>
+                <div class="profile-photo-large" id="modal-photo">
+                    <span id="modal-initials">?</span>
                 </div>
-                <h2 id="modal-name">Nagendra</h2>
-                <p id="modal-role">Root</p>
+                <h2 id="modal-name">Member Name</h2>
+                <p id="modal-role">Role</p>
             </div>
 
             <div class="modal-body">
-                <div class="info-group">
-                    <label>Spouse</label>
-                    <div id="modal-spouse" class="tag-list">
-                        <!-- Spouse tags -->
+                <!-- View Mode Content -->
+                <div id="modal-view-content">
+                    <div class="info-group">
+                        <label>Spouses</label>
+                        <div id="modal-spouse" class="tag-list"></div>
                     </div>
-                    <button class="btn-action btn-sm" id="btn-add-spouse">+ Add Spouse</button>
+                    <div class="info-group">
+                        <label>Children</label>
+                        <div id="modal-children" class="child-list"></div>
+                    </div>
                 </div>
 
-                <div class="info-group">
-                    <label>Children</label>
-                    <div id="modal-children" class="child-list">
-                        <!-- Children list -->
+                <!-- Edit Mode Form (Hidden by default) -->
+                <form id="modal-edit-form" style="display:none;">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="edit-name" class="form-input" placeholder="Enter name...">
                     </div>
-                    <button class="btn-action btn-sm" id="btn-add-child">+ Add Child</button>
-                </div>
+
+                    <div class="form-group">
+                        <label>Life Status</label>
+                        <div id="status-toggle" class="modern-switch">
+                            <div class="switch-track">
+                                <div class="switch-thumb"></div>
+                            </div>
+                            <span class="switch-label">Deceased</span>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" id="btn-delete-member" class="btn-danger-outline">Delete Member</button>
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                    </div>
+                </form>
+
+                <!-- Create Mode Form (Hidden by default) -->
+                <form id="modal-create-form" style="display:none;">
+                    <h3 id="create-title">Add New Member</h3>
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="create-name" class="form-input" placeholder="Enter name...">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn-primary">Add to Tree</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
