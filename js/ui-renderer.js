@@ -10,6 +10,7 @@ export const uiRenderer = {
     _isEditMode: false,
     _listenersAttached: false,
     _isModalOpening: false,
+    _lastModalToggle: 0, // Debounce shield
 
     renderTree(members) {
         this._members = this.computeGenerations(members);
@@ -19,6 +20,14 @@ export const uiRenderer = {
 
         if (!this._listenersAttached) {
             this.attachEventListeners();
+
+            // v3.7.7 - Guarded Hash persistence
+            window.addEventListener('hashchange', () => {
+                if (this._isModalOpening) return;
+                const h = window.location.hash.substring(1);
+                if (h && h !== this._currentRootId) this.renderView(h);
+            });
+
             this._listenersAttached = true;
         }
 
@@ -445,19 +454,23 @@ export const uiRenderer = {
         const modalContent = modal.querySelector('.modal-content');
 
         const closeModal = (e) => {
-            if (e) e.stopImmediatePropagation();
+            if (e) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+            }
+            // Debounce close
+            const now = Date.now();
+            if (now - this._lastModalToggle < 400) return;
+            this._lastModalToggle = now;
+
             modal.classList.add('hidden');
         };
 
         if (closeBtn) closeBtn.onclick = closeModal;
         if (overlay) overlay.onclick = closeModal;
 
-        // Harden click-outside logic to ignore internal content clicks
-        modal.onclick = (e) => {
-            if (modalContent && !modalContent.contains(e.target)) {
-                closeModal(e);
-            }
-        };
+        // v3.7.7 - Remove broad modal.onclick catch-all to prevent ghost reopening
+        modal.onclick = null;
     },
 
     setupDragAndDrop() {
@@ -567,14 +580,18 @@ export const uiRenderer = {
         // Render Tinder Card
         this.renderTinderCard(member);
 
-        // State lock to prevent bounce
+        // v3.7.7 - Shielded Entrance
+        const now = Date.now();
+        if (now - this._lastModalToggle < 400) return;
         if (this._isModalOpening) return;
+
         this._isModalOpening = true;
+        this._lastModalToggle = now;
 
         setTimeout(() => {
             modal.classList.remove('hidden');
             this._isModalOpening = false;
-        }, 30);
+        }, 50);
     },
 
     renderTinderCard(member) {
@@ -786,14 +803,18 @@ export const uiRenderer = {
         };
 
         if (this._isModalOpening) return;
+        const now = Date.now();
+        if (now - this._lastModalToggle < 400) return;
+
         this._isModalOpening = true;
+        this._lastModalToggle = now;
 
         setTimeout(() => {
-            if (modal.classList.contains('hidden')) {
-                modal.classList.remove('hidden');
+            if (modal.classList.contains("hidden")) {
+                modal.classList.remove("hidden");
             }
             this._isModalOpening = false;
-        }, 30);
+        }, 50);
 
         // Gender Toggle
         const genderToggle = document.getElementById('edit-gender-toggle');
@@ -1067,14 +1088,18 @@ export const uiRenderer = {
         statusToggle.onclick = () => statusToggle.classList.toggle('switch-active');
 
         if (this._isModalOpening) return;
+        const now = Date.now();
+        if (now - this._lastModalToggle < 400) return;
+
         this._isModalOpening = true;
+        this._lastModalToggle = now;
 
         setTimeout(() => {
-            if (modal.classList.contains('hidden')) {
-                modal.classList.remove('hidden');
+            if (modal.classList.contains("hidden")) {
+                modal.classList.remove("hidden");
             }
             this._isModalOpening = false;
-        }, 30);
+        }, 50);
 
         createForm.onsubmit = async (e) => {
             e.preventDefault();
