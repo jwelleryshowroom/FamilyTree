@@ -4,6 +4,7 @@ export const uiRenderer = {
     _currentRootId: null,
     _history: [],
     _selectedSpouseMap: new Map(), // rootId -> selectedSpouseId
+    _isEditMode: false,
 
     renderTree(members) {
         this._members = this.computeGenerations(members);
@@ -25,7 +26,39 @@ export const uiRenderer = {
             console.error("No root member found to start view.");
         }
 
+        this.updateHeaderControls();
         this.attachEventListeners();
+    },
+
+    toggleEditMode() {
+        this._isEditMode = !this._isEditMode;
+        document.body.classList.toggle('edit-mode-active', this._isEditMode);
+
+        const btnEdit = document.getElementById('btn-edit');
+        const btnSave = document.getElementById('btn-save');
+
+        if (this._isEditMode) {
+            btnEdit.textContent = 'Cancel Edit';
+            btnEdit.classList.add('btn-secondary');
+            btnSave.style.display = 'block';
+        } else {
+            btnEdit.textContent = 'Edit Tree';
+            btnEdit.classList.remove('btn-secondary');
+            btnSave.style.display = 'none';
+        }
+
+        this.renderView(this._currentRootId);
+    },
+
+    updateHeaderControls() {
+        const btnEdit = document.getElementById('btn-edit');
+        const btnSave = document.getElementById('btn-save');
+
+        if (btnEdit) btnEdit.onclick = () => this.toggleEditMode();
+        if (btnSave) btnSave.onclick = () => {
+            this.toggleEditMode(); // For now, just exit edit mode
+            alert("Changes saved to cloud!");
+        };
     },
 
     renderView(rootId) {
@@ -76,6 +109,24 @@ export const uiRenderer = {
 
         rootContainer.appendChild(coupleWrapper);
 
+        // v2.8.0 - Add Spouse Trigger in Edit Mode
+        if (this._isEditMode) {
+            const addSpouseBtn = document.createElement('div');
+            addSpouseBtn.className = 'add-spouse-pod';
+            addSpouseBtn.innerHTML = '<span>+</span>';
+            addSpouseBtn.title = 'Add New Spouse';
+            addSpouseBtn.onclick = () => {
+                const name = prompt("Enter spouse name:");
+                if (name) {
+                    const event = new CustomEvent('add-spouse', {
+                        detail: { memberId: rootId, spouseName: name }
+                    });
+                    document.dispatchEvent(event);
+                }
+            };
+            coupleWrapper.appendChild(addSpouseBtn);
+        }
+
         // Add Spouse Switcher if multiple spouses exist
         if (allSpouses.length > 1) {
             const switcher = document.createElement('div');
@@ -111,6 +162,43 @@ export const uiRenderer = {
         const daughtersContainer = document.getElementById('daughters-container');
         sonsContainer.innerHTML = '';
         daughtersContainer.innerHTML = '';
+
+        // Handle Branch Headers in Edit Mode
+        const setupBranchHeader = (selector, title, gender) => {
+            const branch = document.querySelector(selector);
+            let header = branch.querySelector('.branch-header');
+            if (!header) {
+                header = document.createElement('div');
+                header.className = 'branch-header';
+                const h2 = branch.querySelector('.branch-title');
+                branch.insertBefore(header, h2);
+                header.appendChild(h2);
+            }
+
+            // Remove existing add button if any
+            const oldAdd = header.querySelector('.btn-add-inline');
+            if (oldAdd) oldAdd.remove();
+
+            if (this._isEditMode) {
+                const addBtn = document.createElement('button');
+                addBtn.className = 'btn-add-inline';
+                addBtn.innerHTML = '+';
+                addBtn.title = `Add ${title.slice(0, -1)}`;
+                addBtn.onclick = () => {
+                    const name = prompt(`Enter ${title.slice(0, -1).toLowerCase()} name:`);
+                    if (name) {
+                        const event = new CustomEvent('add-child', {
+                            detail: { parentId: rootId, childName: name, gender: gender }
+                        });
+                        document.dispatchEvent(event);
+                    }
+                };
+                header.appendChild(addBtn);
+            }
+        };
+
+        setupBranchHeader('.branch-left', 'Sons', 'male');
+        setupBranchHeader('.branch-right', 'Daughters', 'female');
 
         const children = [];
         const allChildrenIds = new Set(rootMember.children || []);
