@@ -75,14 +75,15 @@ document.addEventListener('add-child', async (e) => {
             return;
         }
 
-        const newChildId = `child_${Date.now()}`;
+        const newChildId = e.detail.childId || `child_${Date.now()}`;
         const newChild = {
             id: newChildId,
             name: childName,
             gender: gender,
             generation: (parent.generation || 0) + 1,
             parents: [parentId],
-            status: e.detail.status || 'alive' // v2.9.2 - Handle deceased status on creation
+            status: e.detail.status || 'alive',
+            photoUrl: e.detail.photoUrl || null // v2.9.3 - Support cloud photo on creation
         };
         // Add other parent if known
         if (parent.spouseId) newChild.parents.push(parent.spouseId);

@@ -600,6 +600,29 @@ export const uiRenderer = {
         // Populate Form
         document.getElementById('edit-name').value = member.name;
 
+        // Photo Preview Setup
+        const photoPreview = document.getElementById('edit-photo-preview');
+        const photoInput = document.getElementById('edit-photo-input');
+        const photoArea = document.getElementById('edit-photo-area');
+
+        if (member.photoUrl) {
+            photoPreview.innerHTML = `<img src="${member.photoUrl}" alt="${member.name}">`;
+        } else {
+            photoPreview.innerHTML = `<span class="upload-icon">📸</span>`;
+        }
+
+        photoArea.onclick = () => photoInput.click();
+        photoInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (re) => {
+                    photoPreview.innerHTML = `<img src="${re.target.result}" alt="Preview">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
         // Gender Toggle
         const genderToggle = document.getElementById('edit-gender-toggle');
         const genderLabel = genderToggle.querySelector('.switch-label');
@@ -617,6 +640,7 @@ export const uiRenderer = {
 
         // Status Toggle
         const statusToggle = document.getElementById('edit-status-toggle');
+        const statusLabel = statusToggle.querySelector('.switch-label');
         if (member.status === 'deceased') {
             statusToggle.classList.add('switch-active');
         } else {
@@ -632,11 +656,20 @@ export const uiRenderer = {
 
             try {
                 const { dbService } = await import('./firebase/db.js');
-                await dbService.updateMember(id, {
+                const updates = {
                     name: newName,
                     gender: isFemale ? 'female' : 'male',
                     status: isDeceased ? 'deceased' : 'alive'
-                });
+                };
+
+                // Image Upload Handling
+                if (photoInput.files[0]) {
+                    const { storageService } = await import('./firebase/storage.js');
+                    const photoUrl = await storageService.uploadImage(photoInput.files[0], `profile_photos/${id}`);
+                    updates.photoUrl = photoUrl;
+                }
+
+                await dbService.updateMember(id, updates);
                 modal.classList.add('hidden');
                 // Use custom event for refresh to avoid full page reload if possible
                 location.reload();
@@ -669,6 +702,25 @@ export const uiRenderer = {
         const titleText = genderPref === 'male' ? 'Add Son' : 'Add Daughter';
         document.getElementById('create-title').textContent = titleText;
         document.getElementById('create-name').value = '';
+
+        // Photo Reset
+        const photoPreview = document.getElementById('create-photo-preview');
+        const photoInput = document.getElementById('create-photo-input');
+        const photoArea = document.getElementById('create-photo-area');
+        photoPreview.innerHTML = `<span class="upload-icon">📸</span>`;
+        photoInput.value = '';
+
+        photoArea.onclick = () => photoInput.click();
+        photoInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (re) => {
+                    photoPreview.innerHTML = `<img src="${re.target.result}" alt="Preview">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        };
 
         // Dynamic Button Text
         const submitBtn = document.getElementById('btn-create-submit');
@@ -703,16 +755,31 @@ export const uiRenderer = {
             const isFemale = genderToggle.classList.contains('switch-active');
             const isDeceased = statusToggle.classList.contains('switch-active');
 
-            const event = new CustomEvent('add-child', {
-                detail: {
-                    parentId,
-                    childName: name,
-                    gender: isFemale ? 'female' : 'male',
-                    status: isDeceased ? 'deceased' : 'alive'
+            try {
+                let photoUrl = null;
+                const newId = `child_${Date.now()}`;
+
+                if (photoInput.files[0]) {
+                    const { storageService } = await import('./firebase/storage.js');
+                    photoUrl = await storageService.uploadImage(photoInput.files[0], `profile_photos/${newId}`);
                 }
-            });
-            document.dispatchEvent(event);
-            modal.classList.add('hidden');
+
+                const event = new CustomEvent('add-child', {
+                    detail: {
+                        parentId,
+                        childId: newId, // Override generator if we already have one
+                        childName: name,
+                        gender: isFemale ? 'female' : 'male',
+                        status: isDeceased ? 'deceased' : 'alive',
+                        photoUrl: photoUrl
+                    }
+                });
+                document.dispatchEvent(event);
+                modal.classList.add('hidden');
+            } catch (err) {
+                console.error(err);
+                alert("Failed to add member.");
+            }
         };
     },
 
