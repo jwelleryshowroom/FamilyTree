@@ -8,13 +8,19 @@ export const uiRenderer = {
     _history: [],
     _selectedSpouseMap: new Map(), // rootId -> selectedSpouseId
     _isEditMode: false,
+    _listenersAttached: false,
+    _isModalOpening: false,
 
     renderTree(members) {
         this._members = this.computeGenerations(members);
         this._memberMap = new Map(this._members.map(m => [m.id, m]));
 
         this.updateHeaderControls();
-        this.attachEventListeners();
+
+        if (!this._listenersAttached) {
+            this.attachEventListeners();
+            this._listenersAttached = true;
+        }
 
         // v3.2.0 - Deep Link Persistence
         const hash = window.location.hash.substring(1);
@@ -212,7 +218,7 @@ export const uiRenderer = {
                 h2.innerHTML = `<span class="plus-icon">+</span> Add ${title.slice(0, -1)}`;
                 // v3.1.1 - Pass the active spouse to ensure correct pairing
                 h2.onclick = (e) => {
-                    e.stopPropagation();
+                    e.stopImmediatePropagation();
                     this.openCreateModal(rootId, gender, this._selectedSpouseMap.get(rootId));
                 };
             } else {
@@ -318,11 +324,11 @@ export const uiRenderer = {
         const getInit = (m) => m ? m.name.charAt(0).toUpperCase() : '?';
 
         let html = `
-            <div class="member-photo ${!member.photoUrl ? 'placeholder' : ''}" onclick="event.stopPropagation(); uiRenderer.openModal('${member.id}')">
+            <div class="member-photo ${!member.photoUrl ? 'placeholder' : ''}" onclick="event.stopImmediatePropagation(); uiRenderer.openModal('${member.id}')">
                 ${member.photoUrl ? `<img src="${member.photoUrl}" alt="${member.name}">` : getInit(member)}
                 <div class="photo-view-hint">VIEW</div>
             </div>
-            <div class="member-info" onclick="event.stopPropagation(); uiRenderer.${isRootPosition ? 'openModal' : 'navigateTo'}('${member.id}')">
+            <div class="member-info" onclick="event.stopImmediatePropagation(); uiRenderer.${isRootPosition ? 'openModal' : 'navigateTo'}('${member.id}')">
                 <div class="member-name">${member.name}</div>
             </div>
         `;
@@ -355,14 +361,14 @@ export const uiRenderer = {
 
         // Primary member photo - Clicks to Profile View
         html += `
-            <div class="member-photo ${!member.photoUrl ? 'placeholder' : ''}" onclick="event.stopPropagation(); uiRenderer.openModal('${member.id}')">
+            <div class="member-photo ${!member.photoUrl ? 'placeholder' : ''}" onclick="event.stopImmediatePropagation(); uiRenderer.openModal('${member.id}')">
                 ${member.photoUrl ? `<img src="${member.photoUrl}" alt="${member.name}">` : getInit(member)}
                 <div class="photo-view-hint">VIEW</div>
             </div>
         `;
 
         // Info Section - Clicks to Navigate/Profile
-        html += `<div class="couple-info" onclick="event.stopPropagation(); uiRenderer.${isRootPosition ? 'openModal' : 'navigateTo'}('${member.id}')">`;
+        html += `<div class="couple-info" onclick="event.stopImmediatePropagation(); uiRenderer.${isRootPosition ? 'openModal' : 'navigateTo'}('${member.id}')">`;
         html += `<div class="couple-names">`;
         html += `<div class="name-row">${member.name}</div>`;
         if (spouse) {
@@ -375,7 +381,7 @@ export const uiRenderer = {
         // Spouse photo - Clicks to Profile View
         if (spouse) {
             html += `
-                <div class="member-photo ${!spouse.photoUrl ? 'placeholder' : ''} ${spouse.status === 'deceased' ? 'is-deceased' : ''}" onclick="event.stopPropagation(); uiRenderer.openModal('${spouse.id}')">
+                <div class="member-photo ${!spouse.photoUrl ? 'placeholder' : ''} ${spouse.status === 'deceased' ? 'is-deceased' : ''}" onclick="event.stopImmediatePropagation(); uiRenderer.openModal('${spouse.id}')">
                     ${spouse.photoUrl ? `<img src="${spouse.photoUrl}" alt="${spouse.name}">` : getInit(spouse)}
                     <div class="photo-view-hint">VIEW</div>
                 </div>
@@ -436,17 +442,21 @@ export const uiRenderer = {
 
         const closeBtn = modal.querySelector('.close-btn');
         const overlay = modal.querySelector('.modal-overlay');
-        const closeModal = () => {
+        const modalContent = modal.querySelector('.modal-content');
+
+        const closeModal = (e) => {
+            if (e) e.stopImmediatePropagation();
             modal.classList.add('hidden');
-            // Stop any playing media if needed in future
         };
 
         if (closeBtn) closeBtn.onclick = closeModal;
         if (overlay) overlay.onclick = closeModal;
 
-        // v3.7.0 - Also close when clicking the modal background itself (safety net for overlay)
+        // Harden click-outside logic to ignore internal content clicks
         modal.onclick = (e) => {
-            if (e.target === modal) closeModal();
+            if (modalContent && !modalContent.contains(e.target)) {
+                closeModal(e);
+            }
         };
     },
 
@@ -557,10 +567,14 @@ export const uiRenderer = {
         // Render Tinder Card
         this.renderTinderCard(member);
 
-        // v3.7.5 - Use setTimeout to prevent click bubbling from closing it immediately
+        // State lock to prevent bounce
+        if (this._isModalOpening) return;
+        this._isModalOpening = true;
+
         setTimeout(() => {
             modal.classList.remove('hidden');
-        }, 10);
+            this._isModalOpening = false;
+        }, 30);
     },
 
     renderTinderCard(member) {
@@ -771,12 +785,15 @@ export const uiRenderer = {
             }
         };
 
-        // Reveal Modal after content is ready
+        if (this._isModalOpening) return;
+        this._isModalOpening = true;
+
         setTimeout(() => {
             if (modal.classList.contains('hidden')) {
                 modal.classList.remove('hidden');
             }
-        }, 10);
+            this._isModalOpening = false;
+        }, 30);
 
         // Gender Toggle
         const genderToggle = document.getElementById('edit-gender-toggle');
@@ -1049,12 +1066,15 @@ export const uiRenderer = {
         statusToggle.classList.remove('switch-active');
         statusToggle.onclick = () => statusToggle.classList.toggle('switch-active');
 
-        // Reveal Modal only when all content is mapped to prevent flickering
+        if (this._isModalOpening) return;
+        this._isModalOpening = true;
+
         setTimeout(() => {
             if (modal.classList.contains('hidden')) {
                 modal.classList.remove('hidden');
             }
-        }, 10);
+            this._isModalOpening = false;
+        }, 30);
 
         createForm.onsubmit = async (e) => {
             e.preventDefault();
