@@ -97,4 +97,73 @@ describe('Renderer Component: createCard', () => {
         card.dispatchEvent(dragEvent);
         expect(actions.onDragStart).toHaveBeenCalled();
     });
+
+    it('should handle empty name gracefully', () => {
+        const person = {
+            id: 'p6',
+            name: '',
+            gender: 'male'
+        };
+        const card = createCard(person);
+
+        // Should not throw error
+        expect(card).toBeTruthy();
+        expect(card.querySelector('.person-avatar')).toBeTruthy();
+    });
+
+    it('should handle deceased icon positioning correctly', () => {
+        const person = {
+            id: 'p7',
+            name: 'Deceased Person',
+            gender: 'female',
+            isDeceased: true
+        };
+        const card = createCard(person);
+
+        const deceasedIcon = card.querySelector('.deceased-icon');
+        expect(deceasedIcon).toBeTruthy();
+        expect(deceasedIcon.getAttribute('title')).toBe('Deceased');
+    });
+
+    it('should handle missing gender with default styling', () => {
+        const person = {
+            id: 'p8',
+            name: 'No Gender',
+            gender: undefined
+        };
+        const card = createCard(person);
+
+        // Should default to male styling (blue)
+        const avatar = card.querySelector('.person-avatar');
+        // Browsers convert hex to rgb(), so check for either format
+        expect(avatar.style.background).toMatch(/3b82f6|rgb\(59, 130, 246\)/);
+    });
+
+    it('should render only edit button when onDelete not provided', () => {
+        const person = { id: 'p9', name: 'Test', gender: 'male' };
+        const actions = {
+            onEdit: vi.fn()
+        };
+
+        const card = createCard(person, false, actions);
+
+        const editBtn = card.querySelector('.edit-btn');
+        const deleteBtn = card.querySelector('.delete-btn');
+
+        expect(editBtn).toBeTruthy();
+        expect(deleteBtn).toBeFalsy();
+    });
+
+    it('should not render delete button for focal person even with onDelete provided', () => {
+        const person = { id: 'p10', name: 'Focal', gender: 'male' };
+        const actions = {
+            onEdit: vi.fn(),
+            onDelete: vi.fn()
+        };
+
+        const card = createCard(person, true, actions); // isFocal = true
+
+        const deleteBtn = card.querySelector('.delete-btn');
+        expect(deleteBtn).toBeFalsy();
+    });
 });

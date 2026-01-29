@@ -4,37 +4,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Family Legacy</title>
+    <title>The Heritage - Family Tree</title>
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=5.0.0">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Modules -->
+    <script type="module" src="js/firebase/config.js"></script>
+    <script type="module" src="js/firebase/db.js"></script>
+    <script type="module" src="js/app.js"></script>
 </head>
 
-<body class="view-only">
-    <div id="app">
-        <header class="main-header">
-            <div class="header-content">
-                <h1 id="headerTitle">Family Legacy</h1>
-                <span class="version-badge">v5.0.0</span>
-            </div>
-            <div class="header-actions" style="display: flex; gap: 1rem; align-items: center;">
-                <button id="viewToggleBtn" class="btn-primary"
-                    style="font-size: 0.9rem; padding: 0.5rem 1rem;">Edit</button>
-                <p>Connecting Generations</p>
-            </div>
-            <button id="backButton" class="back-button hidden">← Back</button>
-        </header>
+<body>
 
-        <main id="treeContainer" class="tree-container">
-            <!-- Family Tree will be rendered here -->
-        </main>
+    <!-- Background Elements -->
+    <div class="bg-gradient"></div>
+    <div class="bg-pattern"></div>
+
+    <!-- Header -->
+    <header class="main-header">
+        <div class="header-content">
+            <div class="logo-container">
+                <h1>The Heritage</h1>
+                <p>Family Lineage of Nagendra & Basanti</p>
+                <span class="version-badge">v2.5.0</span>
+            </div>
+
+            <!-- Navigation Integrated in Header -->
+            <div id="nav-controls" class="nav-controls" style="display:none;">
+                <button id="btn-back" class="btn-action btn-sm">← Back to Parent</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="tree-container" style="position: relative;">
+
+        <!-- Root Generation (Parents) -->
+        <section class="generation-root" id="root-container">
+            <!-- Injected by JS -->
+        </section>
+
+        <!-- SVG Connector Canvas -->
+        <svg id="connector-svg"
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: visible;">
+            <!-- Curved paths will be drawn here by JS -->
+        </svg>
+
+        <!-- Split Layout -->
+        <div class="split-layout">
+            <!-- SONS -->
+            <div class="branch branch-left">
+                <h2 class="branch-title">Sons</h2>
+                <div class="nodes-container" id="sons-container">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+
+            <!-- CENTRAL DIVIDER/LINE -->
+            <div class="center-line"></div>
+
+            <!-- DAUGHTERS -->
+            <div class="branch branch-right">
+                <h2 class="branch-title">Daughters</h2>
+                <div class="nodes-container" id="daughters-container">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Profile Modal -->
+    <div id="profile-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content card-glass">
+            <button class="close-btn">&times;</button>
+
+            <div class="modal-header">
+                <div class="profile-photo-large placeholder">
+                    <span id="modal-initials">N</span>
+                </div>
+                <h2 id="modal-name">Nagendra</h2>
+                <p id="modal-role">Root</p>
+            </div>
+
+            <div class="modal-body">
+                <div class="info-group">
+                    <label>Spouse</label>
+                    <div id="modal-spouse" class="tag-list">
+                        <!-- Spouse tags -->
+                    </div>
+                    <button class="btn-action btn-sm" id="btn-add-spouse">+ Add Spouse</button>
+                </div>
+
+                <div class="info-group">
+                    <label>Children</label>
+                    <div id="modal-children" class="child-list">
+                        <!-- Children list -->
+                    </div>
+                    <button class="btn-action btn-sm" id="btn-add-child">+ Add Child</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- SVG Container for connecting lines -->
-    <svg id="connectionsSvg" class="connections-svg"></svg>
-
-    <script type="module" src="js/app.js?v=3.8"></script>
 </body>
 
 </html>

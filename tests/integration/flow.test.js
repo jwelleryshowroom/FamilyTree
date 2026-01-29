@@ -82,6 +82,36 @@ describe('Integration: AddMemberForm Flow', () => {
         const payload = onSubmitMock.mock.calls[0][0];
         expect(payload.newMember.photoFile).toBe(file);
     });
+
+    it('should close modal when cancel button clicked', () => {
+        const parent = { id: 'p1', name: 'Father', gender: 'male' };
+        form.open(parent, 'child-son');
+
+        const modal = document.querySelector('.modal-overlay');
+        expect(modal.classList.contains('active')).toBe(true);
+
+        const cancelBtn = modal.querySelector('.btn-secondary');
+        if (cancelBtn) {
+            cancelBtn.click();
+            expect(modal.classList.contains('active')).toBe(false);
+        }
+    });
+
+    it('should reset form fields when opened', () => {
+        const parent = { id: 'p1', name: 'Father', gender: 'male' };
+
+        // Open once and fill
+        form.open(parent, 'child-son');
+        const nameInput = document.getElementById('memberName');
+        nameInput.value = 'First Name';
+
+        // Close (we'd need a close method or simulate)
+        // Then open again
+        form.open(parent, 'child-daughter');
+
+        // Name should be reset
+        expect(nameInput.value).toBe('');
+    });
 });
 
 // Helper to fire events conveniently
