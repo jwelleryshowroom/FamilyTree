@@ -54,17 +54,18 @@ document.addEventListener('add-spouse', async (e) => {
         await dbService.updateMember(memberId, { spouseId: newSpouseId });
 
         console.log("Spouse added successfully!");
+        uiRenderer.showToast("Spouse added successfully!", "success");
         await initApp(); // Refresh UI
     } catch (error) {
         console.error("Error adding spouse:", error);
-        alert("Failed to add spouse. Check console.");
+        uiRenderer.showToast("Failed to add spouse.", "error");
     }
 });
 
 // --- ADD CHILD ---
 document.addEventListener('add-child', async (e) => {
     const { parentId, childName, gender } = e.detail;
-    console.log("Processing add-child:", parentId, childName);
+    console.log(`[EVENT] Received add-child: Target Parent ID=${parentId}, Child Name=${childName}`);
 
     try {
         const members = await dbService.getAllMembers();
@@ -83,12 +84,17 @@ document.addEventListener('add-child', async (e) => {
             generation: (parent.generation || 0) + 1,
             parents: [parentId],
             status: e.detail.status || 'alive',
-            photoUrl: e.detail.photoUrl || null // v2.9.3 - Support cloud photo on creation
+            photoUrl: e.detail.photoUrl || null,
+            dob: e.detail.dob || null,
+            whatsapp: e.detail.whatsapp || null,
+            gallery: e.detail.gallery || []
         };
-        // Add other parent if known
-        if (parent.spouseId) newChild.parents.push(parent.spouseId);
+        const spouseId = e.detail.spouseId || parent.spouseId;
+        if (spouseId && !newChild.parents.includes(spouseId)) {
+            newChild.parents.push(spouseId);
+        }
 
-        console.log("Saving new child:", newChild);
+        console.log("Saving new child with parents:", newChild.parents);
 
         // 1. Create Child
         await dbService.saveMember(newChild);
@@ -98,21 +104,22 @@ document.addEventListener('add-child', async (e) => {
         const parentChildren = parent.children || [];
         updates.push(dbService.updateMember(parentId, { children: [...parentChildren, newChildId] }));
 
-        if (parent.spouseId) {
-            const spouse = members.find(m => m.id === parent.spouseId);
+        if (spouseId) {
+            const spouse = members.find(m => m.id === spouseId);
             if (spouse) {
                 const spouseChildren = spouse.children || [];
-                updates.push(dbService.updateMember(parent.spouseId, { children: [...spouseChildren, newChildId] }));
+                updates.push(dbService.updateMember(spouseId, { children: [...spouseChildren, newChildId] }));
             }
         }
         await Promise.all(updates);
 
         console.log("Child added successfully!");
+        uiRenderer.showToast("Member added to lineage!", "success");
         await initApp(); // Refresh UI
 
     } catch (error) {
         console.error("Error adding child:", error);
-        alert("Failed to add child. Check console.");
+        uiRenderer.showToast("Failed to add member.", "error");
     }
 });
 

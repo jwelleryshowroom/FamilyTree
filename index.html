@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Heritage - Family Tree</title>
+    <title>The Heritage - Family Tree v3.0.0</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,7 +34,7 @@
             <div class="logo-container">
                 <h1>The Heritage</h1>
                 <p>Family Lineage of Nagendra & Basanti</p>
-                <span class="version-badge">v2.9.3</span>
+                <span class="version-badge">v3.7.5</span>
             </div>
 
             <!-- Navigation & Mode Controls Integrated in Header -->
@@ -90,48 +90,73 @@
     </main>
 
     <!-- Profile Modal -->
-    <div id="profile-modal" class="modal hidden">
+    <div id="profile-modal" class="modal hidden profile-modal-modern">
         <div class="modal-overlay"></div>
         <div class="modal-content card-glass">
             <button class="close-btn">&times;</button>
 
-            <div class="modal-header">
-                <div class="profile-photo-large" id="modal-photo">
-                    <span id="modal-initials">?</span>
-                </div>
-                <h2 id="modal-name">Member Name</h2>
-                <p id="modal-role">Role</p>
-            </div>
-
             <div class="modal-body">
-                <!-- View Mode Content -->
+                <!-- View Mode: Tinder Style card -->
                 <div id="modal-view-content">
-                    <div class="info-group">
-                        <label>Spouses</label>
-                        <div id="modal-spouse" class="tag-list"></div>
-                    </div>
-                    <div class="info-group">
-                        <label>Children</label>
-                        <div id="modal-children" class="child-list"></div>
+                    <div id="tinder-card" class="tinder-wrapper">
+                        <!-- Story Indicators at top -->
+                        <div id="tinder-indicators" class="tinder-indicators"></div>
+
+                        <!-- Photos (Injected by JS) -->
+                        <div id="tinder-photos-container"></div>
+
+                        <!-- Invisible Nav Taps -->
+                        <div class="tinder-nav tinder-nav-left" id="tinder-prev"></div>
+                        <div class="tinder-nav tinder-nav-right" id="tinder-next"></div>
+
+                        <!-- Bottom Info Overlay -->
+                        <div class="tinder-info-overlay">
+                            <h2 id="modal-name">Member Name</h2>
+                            <p id="modal-role">Role</p>
+                        </div>
+
+                        <!-- Floating Edit Button (View Mode Only) -->
+                        <div id="btn-open-edit" class="edit-trigger" title="Edit Profile">
+                            ✎
+                        </div>
                     </div>
                 </div>
+
+                <!-- Hidden inputs for photo handling -->
+                <input type="file" id="edit-photo-input" accept="image/*" hidden>
+                <input type="file" id="create-photo-input" accept="image/*" hidden>
 
                 <!-- Edit Mode Form (Hidden by default) -->
                 <form id="modal-edit-form" style="display:none;">
-                    <div class="form-group photo-upload-group">
-                        <label>Profile Photo</label>
-                        <div class="photo-upload-container" id="edit-photo-area">
-                            <input type="file" id="edit-photo-input" accept="image/*" hidden>
-                            <div class="photo-preview-circle" id="edit-photo-preview">
-                                <span class="upload-icon">📸</span>
-                            </div>
-                            <p class="upload-hint">Tap to change photo</p>
+                    <div class="form-header">
+                        <div id="edit-profile-photo-container"></div>
+                        <div class="form-header-content">
+                            <h2 id="edit-form-title">Edit Profile</h2>
+                            <p id="edit-form-subtitle">Member Details</p>
                         </div>
                     </div>
-
                     <div class="form-group">
                         <label>Full Name</label>
                         <input type="text" id="edit-name" class="form-input" placeholder="Enter name...">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <input type="date" id="edit-dob" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>WhatsApp Number</label>
+                            <input type="tel" id="edit-whatsapp" class="form-input" placeholder="+91 ...">
+                        </div>
+                    </div>
+
+                    <div id="edit-gallery-section" class="gallery-section">
+                        <label>Gallery Photos</label>
+                        <div id="edit-gallery-grid" class="gallery-grid">
+                            <!-- Injected by JS: gallery items + add button -->
+                        </div>
+                        <input type="file" id="gallery-photo-input" accept="image/*" hidden>
                     </div>
 
                     <div class="form-row">
@@ -164,21 +189,36 @@
 
                 <!-- Create Mode Form (Hidden by default) -->
                 <form id="modal-create-form" style="display:none;">
-                    <h3 id="create-title" class="form-subtitle">Add New Member</h3>
-
-                    <div class="form-group photo-upload-group">
-                        <div class="photo-upload-container" id="create-photo-area">
-                            <input type="file" id="create-photo-input" accept="image/*" hidden>
-                            <div class="photo-preview-circle" id="create-photo-preview">
-                                <span class="upload-icon">📸</span>
-                            </div>
-                            <p class="upload-hint">Upload Photo (Optional)</p>
+                    <div class="form-header">
+                        <div id="create-profile-photo-container"></div>
+                        <div class="form-header-content">
+                            <h2 id="create-form-title">Add Member</h2>
+                            <p id="create-form-subtitle">Expanding the Lineage</p>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label>Name</label>
                         <input type="text" id="create-name" class="form-input" placeholder="Enter name...">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <input type="date" id="create-dob" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>WhatsApp Number</label>
+                            <input type="tel" id="create-whatsapp" class="form-input" placeholder="+91 ...">
+                        </div>
+                    </div>
+
+                    <div id="create-gallery-section" class="gallery-section">
+                        <label>Gallery Photos</label>
+                        <div id="create-gallery-grid" class="gallery-grid">
+                            <!-- Injected by JS: gallery items + add button -->
+                        </div>
+                        <input type="file" id="create-gallery-photo-input" accept="image/*" hidden>
                     </div>
 
                     <div class="form-row">
@@ -211,6 +251,27 @@
         </div>
     </div>
 
+    <!-- Custom Confirmation Modal -->
+    <div id="confirm-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content confirm-box card-glass">
+            <div class="confirm-body">
+                <div class="confirm-icon">⚠️</div>
+                <h3 id="confirm-title">Are you sure?</h3>
+                <p id="confirm-message">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-cancel" class="btn-secondary-outline">Cancel</button>
+                <button id="confirm-ok" class="btn-danger">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/app.js"></script>
 </body>
 
 </html>
