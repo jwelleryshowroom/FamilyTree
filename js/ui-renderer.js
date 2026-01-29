@@ -343,10 +343,10 @@ export const uiRenderer = {
         const containerRect = container.getBoundingClientRect();
         const wrapperRect = coupleWrapper.getBoundingClientRect();
 
-        // Calculate relative positions - center of couple wrapper (gap between parents)
-        const rootCenterX = wrapperRect.left - containerRect.left + wrapperRect.width / 2;
-        // Start wire slightly higher (at the vertical center of the parent cards) 
-        // to give that "originating from between them" feel
+        // Calculate positions relative to the container
+        // Origin: Center of the sticky couple wrapper
+        const rootCenterX = wrapperRect.left - containerRect.left + (wrapperRect.width / 2);
+        // Neck: Origin from the vertical center of parent cards
         const rootBottomY = wrapperRect.top - containerRect.top + (wrapperRect.height / 2);
 
         console.log('✅ Drawing connectors from gap center:', rootCenterX, rootBottomY);
