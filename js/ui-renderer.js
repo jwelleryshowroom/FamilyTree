@@ -343,10 +343,10 @@ export const uiRenderer = {
         const containerRect = container.getBoundingClientRect();
         const wrapperRect = coupleWrapper.getBoundingClientRect();
 
-        // Calculate positions relative to the container
-        // Origin: Center of the sticky couple wrapper
-        const rootCenterX = wrapperRect.left - containerRect.left + (wrapperRect.width / 2);
-        // Neck: Origin from the vertical center of parent cards
+        // v2.5.7 - Mathematical Locking
+        // Use absolute container center for horizontal axis to eliminate fast-scroll jitter
+        const rootCenterX = container.offsetWidth / 2;
+        // Scroll-compensated vertical origin for the sticky parents
         const rootBottomY = wrapperRect.top - containerRect.top + (wrapperRect.height / 2);
 
         console.log('✅ Drawing connectors from gap center:', rootCenterX, rootBottomY);

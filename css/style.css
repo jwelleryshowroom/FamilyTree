@@ -57,7 +57,14 @@ body {
     color: var(--text-primary);
     min-height: 100vh;
     overflow-x: hidden;
+    overscroll-behavior: none;
+    /* Disable bouncy scroll on modern browsers */
     line-height: 1.6;
+}
+
+html {
+    overscroll-behavior: none;
+    /* Ensure no bounce at html level */
 }
 
 /* Animated Background */
