@@ -498,31 +498,42 @@ html {
     display: flex;
 }
 
+.couple-card:hover .card-actions,
+.single-card:hover .card-actions {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 .action-btn {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all var(--transition-fast);
-    background: rgba(10, 14, 26, 0.8);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(5px);
-    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.15);
+    /* v2.9.2 - Higher visibility */
+    border: 1.5px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    font-size: 0.9rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .action-btn.edit:hover {
-    color: var(--gold-primary);
+    color: var(--bg-primary);
+    background: var(--gold-primary);
     border-color: var(--gold-primary);
-    transform: scale(1.1);
+    transform: scale(1.15);
 }
 
 .action-btn.delete:hover {
-    color: #ff4d4d;
+    color: white;
+    background: #ff4d4d;
     border-color: #ff4d4d;
-    transform: scale(1.1);
+    transform: scale(1.15);
 }
 
 /* Deceased Look - "Ancestral Light" */
@@ -618,7 +629,39 @@ html {
 }
 
 .branch-title {
-    margin-bottom: 0 !important;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--gold-secondary);
+    margin-bottom: var(--spacing-lg);
+    transition: all var(--transition-base);
+}
+
+/* v2.9.2 - Responsive and Title Button Cleanup */
+.title-as-button {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1.25rem;
+    background: rgba(246, 211, 101, 0.05);
+    border: 1px dashed var(--gold-primary);
+    border-radius: var(--radius-full);
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+}
+
+.title-as-button:hover {
+    background: rgba(246, 211, 101, 0.15);
+    border-style: solid;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(246, 211, 101, 0.1);
+}
+
+.title-as-button .plus-icon {
+    font-size: 1.25rem;
+    color: var(--gold-primary);
 }
 
 .btn-add-inline {
@@ -982,6 +1025,15 @@ html {
     align-items: center;
     gap: 1rem;
     cursor: pointer;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--glass-border);
+    width: fit-content;
+}
+
+.modern-switch:hover {
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .switch-track {

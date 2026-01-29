@@ -13,6 +13,7 @@ async function initApp() {
     console.log("Loaded Members:", members.length);
 
     if (members && members.length > 0) {
+        window.uiRenderer = uiRenderer; // v2.9.1 - Ensure global access for inline event handlers
         uiRenderer.renderTree(members);
     }
 }
@@ -80,7 +81,8 @@ document.addEventListener('add-child', async (e) => {
             name: childName,
             gender: gender,
             generation: (parent.generation || 0) + 1,
-            parents: [parentId]
+            parents: [parentId],
+            status: e.detail.status || 'alive' // v2.9.2 - Handle deceased status on creation
         };
         // Add other parent if known
         if (parent.spouseId) newChild.parents.push(parent.spouseId);

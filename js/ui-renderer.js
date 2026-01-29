@@ -166,28 +166,21 @@ export const uiRenderer = {
         // Handle Branch Headers in Edit Mode
         const setupBranchHeader = (selector, title, gender) => {
             const branch = document.querySelector(selector);
-            let header = branch.querySelector('.branch-header');
-            if (!header) {
-                header = document.createElement('div');
-                header.className = 'branch-header';
-                const h2 = branch.querySelector('.branch-title');
-                branch.insertBefore(header, h2);
-                header.appendChild(h2);
-            }
-
-            // v2.9.0 - Clean up all previous add controls
-            const oldAddInline = header.querySelector('.btn-add-inline');
-            const oldAddCapsule = header.querySelector('.add-member-capsule');
-            if (oldAddInline) oldAddInline.remove();
-            if (oldAddCapsule) oldAddCapsule.remove();
+            const h2 = branch.querySelector('.branch-title');
 
             if (this._isEditMode) {
-                const addBtn = document.createElement('button');
-                addBtn.className = 'add-member-capsule';
-                addBtn.innerHTML = `<span>+</span> Add ${title.slice(0, -1)}`;
-                addBtn.onclick = () => this.openCreateModal(rootId, gender);
-                header.appendChild(addBtn);
+                h2.classList.add('title-as-button');
+                h2.innerHTML = `<span class="plus-icon">+</span> Add ${title.slice(0, -1)}`;
+                h2.onclick = () => this.openCreateModal(rootId, gender);
+            } else {
+                h2.classList.remove('title-as-button');
+                h2.textContent = title;
+                h2.onclick = null;
             }
+
+            // v2.9.2 - Clean up old add-member-capsule if any exists from previous version
+            const oldCapsule = branch.querySelector('.add-member-capsule');
+            if (oldCapsule) oldCapsule.remove();
         };
 
         setupBranchHeader('.branch-left', 'Sons', 'male');
@@ -595,34 +588,57 @@ export const uiRenderer = {
         const editForm = document.getElementById('modal-edit-form');
         const createForm = document.getElementById('modal-create-form');
 
+        // Animation Fix: Only show modal if hidden
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+        }
+
         viewContent.style.display = 'none';
         editForm.style.display = 'block';
         createForm.style.display = 'none';
 
         // Populate Form
         document.getElementById('edit-name').value = member.name;
-        const toggle = document.getElementById('status-toggle');
-        if (member.status === 'deceased') {
-            toggle.classList.add('switch-active');
-        } else {
-            toggle.classList.remove('switch-active');
-        }
 
-        toggle.onclick = () => toggle.classList.toggle('switch-active');
+        // Gender Toggle
+        const genderToggle = document.getElementById('edit-gender-toggle');
+        const genderLabel = genderToggle.querySelector('.switch-label');
+        if (member.gender === 'female') {
+            genderToggle.classList.add('switch-active');
+            genderLabel.textContent = 'Female';
+        } else {
+            genderToggle.classList.remove('switch-active');
+            genderLabel.textContent = 'Male';
+        }
+        genderToggle.onclick = () => {
+            genderToggle.classList.toggle('switch-active');
+            genderLabel.textContent = genderToggle.classList.contains('switch-active') ? 'Female' : 'Male';
+        };
+
+        // Status Toggle
+        const statusToggle = document.getElementById('edit-status-toggle');
+        if (member.status === 'deceased') {
+            statusToggle.classList.add('switch-active');
+        } else {
+            statusToggle.classList.remove('switch-active');
+        }
+        statusToggle.onclick = () => statusToggle.classList.toggle('switch-active');
 
         editForm.onsubmit = async (e) => {
             e.preventDefault();
             const newName = document.getElementById('edit-name').value;
-            const isDeceased = toggle.classList.contains('switch-active');
+            const isFemale = genderToggle.classList.contains('switch-active');
+            const isDeceased = statusToggle.classList.contains('switch-active');
 
             try {
                 const { dbService } = await import('./firebase/db.js');
                 await dbService.updateMember(id, {
                     name: newName,
+                    gender: isFemale ? 'female' : 'male',
                     status: isDeceased ? 'deceased' : 'alive'
                 });
                 modal.classList.add('hidden');
-                // Refresh App
+                // Use custom event for refresh to avoid full page reload if possible
                 location.reload();
             } catch (err) {
                 console.error(err);
@@ -632,37 +648,72 @@ export const uiRenderer = {
 
         const btnDelete = document.getElementById('btn-delete-member');
         btnDelete.onclick = () => this.handleDeleteMember(id);
-
-        modal.classList.remove('hidden');
     },
 
-    openCreateModal(parentId, gender) {
+    openCreateModal(parentId, genderPref) {
+        const parent = this._memberMap.get(parentId);
         const modal = document.getElementById('profile-modal');
         const viewContent = document.getElementById('modal-view-content');
         const editForm = document.getElementById('modal-edit-form');
         const createForm = document.getElementById('modal-create-form');
 
+        // Animation Fix
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+        }
+
         viewContent.style.display = 'none';
         editForm.style.display = 'none';
         createForm.style.display = 'block';
 
-        const title = gender === 'male' ? 'Add Son' : 'Add Daughter';
-        document.getElementById('create-title').textContent = title;
+        const titleText = genderPref === 'male' ? 'Add Son' : 'Add Daughter';
+        document.getElementById('create-title').textContent = titleText;
         document.getElementById('create-name').value = '';
+
+        // Dynamic Button Text
+        const submitBtn = document.getElementById('btn-create-submit');
+        const parentFirstName = parent ? parent.name.split(' ')[0] : 'Family';
+        submitBtn.textContent = `Add to ${parentFirstName}'s Lineage`;
+
+        // Gender Toggle (Pre-set but changeable)
+        const genderToggle = document.getElementById('create-gender-toggle');
+        const genderLabel = genderToggle.querySelector('.switch-label');
+        if (genderPref === 'female') {
+            genderToggle.classList.add('switch-active');
+            genderLabel.textContent = 'Female';
+        } else {
+            genderToggle.classList.remove('switch-active');
+            genderLabel.textContent = 'Male';
+        }
+        genderToggle.onclick = () => {
+            genderToggle.classList.toggle('switch-active');
+            genderLabel.textContent = genderToggle.classList.contains('switch-active') ? 'Female' : 'Male';
+        };
+
+        // Status Toggle (Default alive)
+        const statusToggle = document.getElementById('create-status-toggle');
+        statusToggle.classList.remove('switch-active');
+        statusToggle.onclick = () => statusToggle.classList.toggle('switch-active');
 
         createForm.onsubmit = async (e) => {
             e.preventDefault();
             const name = document.getElementById('create-name').value;
             if (!name) return;
 
+            const isFemale = genderToggle.classList.contains('switch-active');
+            const isDeceased = statusToggle.classList.contains('switch-active');
+
             const event = new CustomEvent('add-child', {
-                detail: { parentId, childName: name, gender }
+                detail: {
+                    parentId,
+                    childName: name,
+                    gender: isFemale ? 'female' : 'male',
+                    status: isDeceased ? 'deceased' : 'alive'
+                }
             });
             document.dispatchEvent(event);
             modal.classList.add('hidden');
         };
-
-        modal.classList.remove('hidden');
     },
 
     async handleDeleteMember(id) {

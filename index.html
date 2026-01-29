@@ -34,7 +34,7 @@
             <div class="logo-container">
                 <h1>The Heritage</h1>
                 <p>Family Lineage of Nagendra & Basanti</p>
-                <span class="version-badge">v2.9.0</span>
+                <span class="version-badge">v2.9.2</span>
             </div>
 
             <!-- Navigation & Mode Controls Integrated in Header -->
@@ -124,8 +124,18 @@
                     </div>
 
                     <div class="form-group">
+                        <label>Gender</label>
+                        <div id="edit-gender-toggle" class="modern-switch">
+                            <div class="switch-track">
+                                <div class="switch-thumb"></div>
+                            </div>
+                            <span class="switch-label">Female</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
                         <label>Life Status</label>
-                        <div id="status-toggle" class="modern-switch">
+                        <div id="edit-status-toggle" class="modern-switch">
                             <div class="switch-track">
                                 <div class="switch-thumb"></div>
                             </div>
@@ -141,13 +151,34 @@
 
                 <!-- Create Mode Form (Hidden by default) -->
                 <form id="modal-create-form" style="display:none;">
-                    <h3 id="create-title">Add New Member</h3>
+                    <h3 id="create-title" class="form-subtitle">Add New Member</h3>
                     <div class="form-group">
                         <label>Name</label>
                         <input type="text" id="create-name" class="form-input" placeholder="Enter name...">
                     </div>
+
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <div id="create-gender-toggle" class="modern-switch">
+                            <div class="switch-track">
+                                <div class="switch-thumb"></div>
+                            </div>
+                            <span class="switch-label">Female</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Life Status</label>
+                        <div id="create-status-toggle" class="modern-switch">
+                            <div class="switch-track">
+                                <div class="switch-thumb"></div>
+                            </div>
+                            <span class="switch-label">Deceased</span>
+                        </div>
+                    </div>
+
                     <div class="modal-footer">
-                        <button type="submit" class="btn-primary">Add to Tree</button>
+                        <button type="submit" id="btn-create-submit" class="btn-primary">Add Member</button>
                     </div>
                 </form>
             </div>
