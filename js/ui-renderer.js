@@ -3,6 +3,7 @@ export const uiRenderer = {
     _memberMap: new Map(),
     _currentRootId: null,
     _history: [],
+    _selectedSpouseMap: new Map(), // rootId -> selectedSpouseId
 
     renderTree(members) {
         this._members = this.computeGenerations(members);
@@ -38,12 +39,20 @@ export const uiRenderer = {
         const rootContainer = document.getElementById('root-container');
         rootContainer.innerHTML = '';
 
+        // Get all potential spouses
+        const spouseIds = new Set();
+        if (rootMember.spouseId) spouseIds.add(rootMember.spouseId);
+        if (rootMember.spouses) rootMember.spouses.forEach(id => spouseIds.add(id));
+
+        const allSpouses = Array.from(spouseIds)
+            .map(id => this._memberMap.get(id))
+            .filter(s => s);
+
         let spouse = null;
-        // Handle both 'spouseId' (singular) and 'spouses' (array) data formats
-        if (rootMember.spouseId) {
-            spouse = this._memberMap.get(rootMember.spouseId);
-        } else if (rootMember.spouses && rootMember.spouses.length > 0) {
-            spouse = this._memberMap.get(rootMember.spouses[0]);
+        if (allSpouses.length > 0) {
+            const savedSpouseId = this._selectedSpouseMap.get(rootId);
+            spouse = allSpouses.find(s => s.id === savedSpouseId) || allSpouses[0];
+            this._selectedSpouseMap.set(rootId, spouse.id);
         }
 
         // Create wrapper for two cards
@@ -67,6 +76,25 @@ export const uiRenderer = {
 
         rootContainer.appendChild(coupleWrapper);
 
+        // Add Spouse Switcher if multiple spouses exist
+        if (allSpouses.length > 1) {
+            const switcher = document.createElement('div');
+            switcher.className = 'spouse-switcher';
+            allSpouses.forEach(s => {
+                const dot = document.createElement('button');
+                dot.className = `spouse-dot ${s.id === spouse.id ? 'active' : ''}`;
+                dot.title = s.name;
+                dot.textContent = s.name.charAt(0);
+                dot.onclick = (e) => {
+                    e.stopPropagation();
+                    this._selectedSpouseMap.set(rootId, s.id);
+                    this.renderView(rootId);
+                };
+                switcher.appendChild(dot);
+            });
+            rootContainer.appendChild(switcher);
+        }
+
         // Update Back Button
         const navControls = document.getElementById('nav-controls');
         const btnBack = document.getElementById('btn-back');
@@ -84,15 +112,26 @@ export const uiRenderer = {
         sonsContainer.innerHTML = '';
         daughtersContainer.innerHTML = '';
 
-        let childrenIds = new Set(rootMember.children || []);
+        const children = [];
+        const allChildrenIds = new Set(rootMember.children || []);
+        // Also collect children from the current active spouse
         if (spouse && spouse.children) {
-            spouse.children.forEach(id => childrenIds.add(id));
+            spouse.children.forEach(id => allChildrenIds.add(id));
         }
 
-        const children = [];
-        childrenIds.forEach(id => {
+        allChildrenIds.forEach(id => {
             const child = this._memberMap.get(id);
-            if (child) children.push(child);
+            if (child) {
+                // If there are multiple spouses, only show children of EXACT match (both parents)
+                // If only one spouse, show all children of rootMember
+                if (allSpouses.length > 1) {
+                    if (child.parents && child.parents.includes(rootId) && child.parents.includes(spouse.id)) {
+                        children.push(child);
+                    }
+                } else {
+                    children.push(child);
+                }
+            }
         });
 
         const sortNodes = (nodes) => {
@@ -603,6 +642,54 @@ export const uiRenderer = {
                     detail: { parentId: member.id, childName: name, gender: gender }
                 }));
             }
+        }
+    },
+
+    // --- Data Repair Helper for Rajesh's Multiple Spouses ---
+    async fixRajeshRelationships() {
+        console.log("🛠️ Starting Rajesh Relationship Fix...");
+        try {
+            const { dbService } = await import('./firebase/db.js');
+            const members = await dbService.getAllMembers();
+
+            const rajesh = members.find(m => m.name && m.name.includes("Rajesh"));
+            const sasita = members.find(m => m.name && m.name.includes("Sasita"));
+            const kanchana = members.find(m => m.name && m.name.includes("Kanchana"));
+
+            if (!rajesh || !sasita || !kanchana) {
+                console.error("❌ Missing primary members:", { rajesh: !!rajesh, sasita: !!sasita, kanchana: !!kanchana });
+                return;
+            }
+
+            console.log(`✅ Found Rajesh (${rajesh.id}), Sasita (${sasita.id}), Kanchana (${kanchana.id})`);
+
+            // 1. Link Spouses
+            await dbService.updateMember(rajesh.id, {
+                spouses: [sasita.id, kanchana.id],
+                spouseId: sasita.id // Default
+            });
+            await dbService.updateMember(sasita.id, { spouses: [rajesh.id] });
+            await dbService.updateMember(kanchana.id, { spouses: [rajesh.id] });
+
+            // 2. Segment Children
+            const childrenIds = rajesh.children || [];
+            for (const id of childrenIds) {
+                const child = members.find(m => m.id === id);
+                if (!child) continue;
+
+                if (child.name && (child.name.includes("Amit") || child.name.includes("Priti"))) {
+                    await dbService.updateMember(id, { parents: [rajesh.id, sasita.id] });
+                    console.log(`👶 Linked ${child.name} to Sasita`);
+                } else {
+                    await dbService.updateMember(id, { parents: [rajesh.id, kanchana.id] });
+                    console.log(`👶 Linked ${child.name} to Kanchana`);
+                }
+            }
+
+            console.log("🚀 SUCCESS! Please refresh the page.");
+            alert("Rajesh's family structure updated! Please refresh.");
+        } catch (e) {
+            console.error("❌ Fix failed:", e);
         }
     }
 };
