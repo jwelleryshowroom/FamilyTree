@@ -95,8 +95,17 @@ export const uiRenderer = {
             if (child) children.push(child);
         });
 
-        const sons = children.filter(c => c.gender === 'male').sort((a, b) => a.name.localeCompare(b.name));
-        const daughters = children.filter(c => c.gender === 'female' || c.gender === undefined).sort((a, b) => a.name.localeCompare(b.name));
+        const sortNodes = (nodes) => {
+            return nodes.sort((a, b) => {
+                const orderA = a.sortOrder !== undefined ? a.sortOrder : 1000;
+                const orderB = b.sortOrder !== undefined ? b.sortOrder : 1000;
+                if (orderA !== orderB) return orderA - orderB;
+                return a.name.localeCompare(b.name);
+            });
+        };
+
+        const sons = sortNodes(children.filter(c => c.gender === 'male'));
+        const daughters = sortNodes(children.filter(c => c.gender === 'female' || c.gender === undefined));
 
         sons.forEach(son => {
             let sonSpouse = son.spouseId ? this._memberMap.get(son.spouseId) : null;
@@ -112,6 +121,9 @@ export const uiRenderer = {
 
         // --- 3. Draw SVG Connectors ---
         setTimeout(() => this.drawConnectors(), 150);
+
+        // --- 4. Setup Drag & Drop ---
+        this.setupDragAndDrop();
 
         // Add scroll listener for sticky connectors UNLESS already added
         if (!this._scrollListenerAdded) {
@@ -172,10 +184,23 @@ export const uiRenderer = {
         const div = document.createElement('div');
         div.className = isRootPosition ? 'couple-card active-root' : 'couple-card child-node';
 
+        // v2.6.0 - Drag & Drop Support
+        if (!isRootPosition) {
+            div.draggable = true;
+            div.dataset.id = member.id;
+        }
+
         if (isRootPosition) {
             div.onclick = () => this.openModal(member.id);
         } else {
-            div.onclick = () => this.navigateTo(member.id);
+            div.onclick = (e) => {
+                // Prevent navigation if we just finished a drag
+                if (div.classList.contains('just-dragged')) {
+                    div.classList.remove('just-dragged');
+                    return;
+                }
+                this.navigateTo(member.id);
+            };
         }
 
         const getInit = (m) => m ? m.name.charAt(0).toUpperCase() : '?';
@@ -258,6 +283,97 @@ export const uiRenderer = {
         const closeModal = () => modal.classList.add('hidden');
         if (closeBtn) closeBtn.onclick = closeModal;
         if (overlay) overlay.onclick = closeModal;
+    },
+
+    setupDragAndDrop() {
+        const containers = [
+            document.getElementById('sons-container'),
+            document.getElementById('daughters-container')
+        ];
+
+        containers.forEach(container => {
+            if (!container) return;
+
+            container.addEventListener('dragstart', (e) => {
+                const card = e.target.closest('.couple-card');
+                if (!card) return;
+                card.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', card.dataset.id);
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            container.addEventListener('dragend', (e) => {
+                const card = e.target.closest('.couple-card');
+                if (!card) return;
+                card.classList.remove('dragging');
+                card.classList.add('just-dragged');
+
+                // Cleanup hover states
+                container.classList.remove('drag-over');
+
+                // Redraw connectors in case positions shifted
+                this.drawConnectors();
+            });
+
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                container.classList.add('drag-over');
+
+                const draggingCard = container.querySelector('.dragging');
+                if (!draggingCard) return;
+
+                const afterElement = this.getDragAfterElement(container, e.clientY);
+                if (afterElement == null) {
+                    container.appendChild(draggingCard);
+                } else {
+                    container.insertBefore(draggingCard, afterElement);
+                }
+
+                // Real-time connector update for smooth "wings" feeling
+                this.drawConnectors();
+            });
+
+            container.addEventListener('dragleave', () => {
+                container.classList.remove('drag-over');
+            });
+
+            container.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                container.classList.remove('drag-over');
+
+                // Save New Order to Database
+                const cards = Array.from(container.querySelectorAll('.couple-card'));
+                const orderMap = {};
+                cards.forEach((card, index) => {
+                    orderMap[card.dataset.id] = index;
+                    // Update local map to reflect changes without full reload
+                    const member = this._memberMap.get(card.dataset.id);
+                    if (member) member.sortOrder = index;
+                });
+
+                try {
+                    const { dbService } = await import('./firebase/db.js');
+                    await dbService.updateMemberOrder(orderMap);
+                    console.log('✅ Order saved to database');
+                } catch (error) {
+                    console.error('❌ Failed to save order:', error);
+                }
+            });
+        });
+    },
+
+    getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.couple-card:not(.dragging)')];
+
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
     },
 
     openModal(id) {

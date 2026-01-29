@@ -44,6 +44,21 @@ export const dbService = {
         }
     },
 
+    // Batch update sort order
+    async updateMemberOrder(orderMap) {
+        try {
+            const batch = writeBatch(db);
+            Object.keys(orderMap).forEach(memberId => {
+                const memberRef = doc(db, COLLECTION_NAME, memberId);
+                batch.set(memberRef, { sortOrder: orderMap[memberId] }, { merge: true });
+            });
+            await batch.commit();
+        } catch (error) {
+            console.error("Error updating member order: ", error);
+            throw error;
+        }
+    },
+
     // Seed or Sync database
     async seedIfEmpty(initialData) {
         let members = await this.getAllMembers();
